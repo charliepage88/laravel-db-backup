@@ -80,7 +80,7 @@ class BackupCommand extends BaseCommand
             'file' => $this->filePath,
             'file_name' => $this->fileName,
             'prefix' => $this->option('prefix'),
-            'encrypted' => $this->option('encrypt'),
+            'encrypted' => ($this->option('encrypt') ? 1 : 0),
             'created_at' => Carbon::now()->timestamp
         ]);
 

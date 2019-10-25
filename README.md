@@ -65,15 +65,15 @@ return [
     // s3 settings
     's3' => [
         'path'  => '/backups',
-        'bucket' => env('S3_BUCKET', null)
-        'region' => env('', 'us-east-1'),
+        'bucket' => env('S3_BUCKET', null),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
         'accessKey' => env('AWS_ACCESS_KEY_ID', null),
         'secretKey' => env('AWS_SECRET_ACCESS_KEY', null),
     ],
     
     //encrypt settings
     'encrypt' => [
-        'key' => env('ENCRYPT_KEY', '')
+        'key' => env('BACKUP_ENCRYPT_KEY', '')
     ],
 
     // Use GZIP compression
@@ -87,20 +87,20 @@ __All settings are optional and have set default values.__
 ## Usage
 
 #### Backup
-Creates a dump file in `app/storage/backups`
+Creates a dump file in `app/storage/backups`, by default
 ```sh
 $ php artisan db:backup
 ```
 
-###### Use specific database
+###### Use specific database connection
 ```sh
 $ php artisan db:backup --database=beta
 ```
-###### Need ecnrypt db
+###### Enable encryption of backup files
 ```sh
 $ php artisan db:backup --encrypt
 ```
-###### You can merge options like this
+###### Pass in multiple options easily
 ```sh
 $ php artisan db:backup --upload-s3 --encrypt
 ```
