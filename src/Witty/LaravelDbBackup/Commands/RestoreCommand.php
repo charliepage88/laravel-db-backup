@@ -271,8 +271,8 @@ class RestoreCommand extends BaseCommand
     {
         return [
             ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to restore to'],
-            ['last-dump', true, InputOption::VALUE_NONE, 'The last dump stored'],
-            ['aws-last-dump', true, InputOption::VALUE_NONE, 'The last dump from aws'],
+            ['last-dump', true, InputOption::VALUE_OPTIONAL, 'The last dump stored'],
+            ['aws-last-dump', true, InputOption::VALUE_OPTIONAL, 'The last dump from aws'],
             ['aws-dump', null, InputOption::VALUE_OPTIONAL, 'The dump from aws. Enter file name'],
         ];
     }
