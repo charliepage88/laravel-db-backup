@@ -1,10 +1,9 @@
-<?php namespace Witty\LaravelDbBackup\Commands\Helpers;
+<?php
+
+namespace Witty\LaravelDbBackup\Commands\Helpers;
 
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
-use AWS;
-use Config;
-use File;
 
 use Witty\LaravelDbBackup\Commands\Helpers\BackupFile;
 use Witty\LaravelDbBackup\ConsoleColors;

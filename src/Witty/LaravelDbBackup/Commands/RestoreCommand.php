@@ -181,6 +181,14 @@ class RestoreCommand extends BaseCommand
      */
     protected function listAllDumps()
     {
+        /*
+        // get all s3 files in bucket
+        $objects = $s3->getIterator('ListObjects', [
+            'Bucket' => Config::get('db-backup.s3.bucket'),
+            'Prefix' => $this->getS3Path() . '/'
+        ]);
+        */
+
         $finder = new Finder();
         $finder->files()->in($this->getDumpsPath());
 

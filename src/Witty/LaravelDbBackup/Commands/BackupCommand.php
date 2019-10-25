@@ -13,9 +13,9 @@ use Witty\LaravelDbBackup\Commands\Helpers\BackupHandler;
 use Witty\LaravelDbBackup\Commands\Helpers\Encrypt;
 use Witty\LaravelDbBackup\Models\Dump;
 
-
 /**
  * Class BackupCommand
+ *
  * @package Witty\LaravelDbBackup\Commands
  */
 class BackupCommand extends BaseCommand
@@ -24,11 +24,25 @@ class BackupCommand extends BaseCommand
      * @var string
      */
     protected $name = 'db:backup';
+
+    /**
+     * @var string
+     */
     protected $description = 'Backup the default database to `storage/dumps`';
+
+    /**
+     * @var string
+     */
     protected $filePath;
+
+    /**
+     * @var string
+     */
     protected $fileName;
 
     /**
+     * Handle
+     *
      * @return void
      */
     public function handle()
@@ -37,6 +51,8 @@ class BackupCommand extends BaseCommand
     }
 
     /**
+     * Fire
+     *
      * @return void
      */
     public function fire()
@@ -47,10 +63,12 @@ class BackupCommand extends BaseCommand
 
         //----------------
         $dbfile = new BackupFile($this->argument('filename'), $database, $this->getDumpsPath());
+
         $this->filePath = $dbfile->path();
         $this->fileName = $dbfile->name();
 
         $status = $database->dump($this->filePath);
+
         $handler = new BackupHandler($this->colors);
 
         // Error
@@ -63,8 +81,9 @@ class BackupCommand extends BaseCommand
         //----------------
         if ($this->isCompressionEnabled()) {
             $this->compress();
-            $this->fileName .= ".gz";
-            $this->filePath .= ".gz";
+
+            $this->fileName .= '.gz';
+            $this->filePath .= '.gz';
         }
         // Encrypting
         //----------------
@@ -84,7 +103,11 @@ class BackupCommand extends BaseCommand
             'created_at' => Carbon::now()->timestamp
         ]);
 
-        $this->line($handler->dumpResponse($this->argument('filename'), $this->filePath, $this->fileName));
+        $this->line($handler->dumpResponse(
+            $this->argument('filename'),
+            $this->filePath,
+            $this->fileName
+        ));
 
         // S3 Upload
         //----------------
@@ -94,12 +117,14 @@ class BackupCommand extends BaseCommand
 
             if ($this->option('keep-only-s3') !== false) {
                 File::delete($this->filePath);
+
                 $this->line($handler->localDumpRemovedResponse());
             }
         }
     }
 
     /**
+     * Compress
      * Perform Gzip compression on file
      *
      * @return boolean
@@ -112,6 +137,7 @@ class BackupCommand extends BaseCommand
     }
 
     /**
+     * Get Arguments
      * Get the console command arguments.
      *
      * @return array
@@ -119,11 +145,17 @@ class BackupCommand extends BaseCommand
     protected function getArguments()
     {
         return [
-            ['filename', InputArgument::OPTIONAL, 'Filename or -path for the dump.'],
+            [
+                'filename',
+                InputArgument::OPTIONAL,
+                'Filename or -path for the dump.'
+            ],
         ];
     }
 
     /**
+     * Get Options
+     *
      * @return array
      */
     protected function getOptions()
@@ -168,6 +200,8 @@ class BackupCommand extends BaseCommand
     }
 
     /**
+     * Check Dump Folder
+     *
      * @return void
      */
     protected function checkDumpFolder()
@@ -180,10 +214,13 @@ class BackupCommand extends BaseCommand
     }
 
     /**
+     * Upload S3
+     *
      * @return void
      */
     protected function uploadS3()
     {
+        // connect to S3
         $s3 = new S3Client([
             'region'  => Config::get('db-backup.s3.region'),
             'version' => 'latest',
@@ -194,6 +231,7 @@ class BackupCommand extends BaseCommand
         ]);
 
         try {
+            // attempt to store file on S3
             $s3->putObject([
                 'Bucket' => Config::get('db-backup.s3.bucket'),
                 'Key' => $this->getS3Path() . '/' . $this->fileName,

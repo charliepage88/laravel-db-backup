@@ -1,4 +1,6 @@
-<?php namespace Witty\LaravelDbBackup\Commands\Helpers;
+<?php
+
+namespace Witty\LaravelDbBackup\Commands\Helpers;
 
 /**
  * Class BackupFile
@@ -6,7 +8,6 @@
  */
 class BackupFile
 {
-
     /**
      * @var string
      */
