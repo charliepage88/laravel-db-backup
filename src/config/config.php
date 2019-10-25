@@ -14,12 +14,13 @@ return [
         'bucket' => env('S3_BUCKET', null)
         'region' => env('', 'us-east-1'),
         'accessKey' => env('AWS_ACCESS_KEY_ID', null),
-        'secretKey' => env('AWS_SECRET_ACCESS_KEY', null),
+        'secretKey' => env('AWS_SECRET_ACCESS_KEY', null)
     ],
 
     'encrypt' => [
-        'key' => env('ENCRYPT_KEY','')
+        'key' => env('ENCRYPT_KEY', '')
     ],
+
     'compress' => true,
 ];
 

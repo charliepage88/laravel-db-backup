@@ -98,6 +98,6 @@ class BaseCommand extends Command
      */
     public function isCompressed($fileName)
     {
-        return pathinfo($fileName, PATHINFO_EXTENSION) === "gz";
+        return (pathinfo($fileName, PATHINFO_EXTENSION) === "gz");
     }
 }

@@ -49,7 +49,7 @@ class RestoreCommand extends BaseCommand
             return $this->restoreLastAwsDump();
 
         }
-        $fileName = $this->argument('dump');
+        $fileName = $this->argument('filename');
 
         if ($this->option('last-dump')) {
             $fileName = $this->lastBackupFile();
@@ -260,7 +260,7 @@ class RestoreCommand extends BaseCommand
     protected function getArguments()
     {
         return [
-            ['dump', InputArgument::OPTIONAL, 'Filename of the dump']
+            ['filename', InputArgument::OPTIONAL, 'Filename of the dump']
         ];
     }
 

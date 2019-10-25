@@ -130,9 +130,9 @@ class BackupCommand extends BaseCommand
     {
         return [
             ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to backup'],
-            ['upload-s3', true, InputOption::VALUE_OPTIONAL, 'Upload the dump to your S3 bucket'],
+            ['upload-s3', true, InputOption::VALUE_NONE, 'Upload the dump to your S3 bucket'],
             ['keep-only-s3', true, InputOption::VALUE_NONE, 'Delete the local dump after upload to S3 bucket'],
-            ['prefix', null, InputOption::VALUE_NONE, 'Prefix for sql backup'],
+            ['prefix', null, InputOption::VALUE_OPTIONAL, 'Prefix for sql backup'],
             ['encrypt', false, InputOption::VALUE_NONE, 'Encrypt dump'],
         ];
     }
