@@ -66,7 +66,7 @@ class BaseCommand extends Command
      */
     protected function getS3Path()
     {
-        return Config::get('db-backup.s3.path');
+        return ltrim(Config::get('db-backup.s3.path'), '/');
     }
 
     /**
