@@ -68,7 +68,7 @@ class BackupCommand extends BaseCommand
         }
         // Encrypting
         //----------------
-        if ($this->option('encrypt')) {
+        if ($this->option('encrypt') !== false) {
             if (!Encrypt::encryptFile($this->filePath)) {
                 return $this->line('Encrypt returned false result');
             }
@@ -88,11 +88,11 @@ class BackupCommand extends BaseCommand
 
         // S3 Upload
         //----------------
-        if ($this->option('upload-s3')) {
+        if ($this->option('upload-s3') !== false) {
             $this->uploadS3();
             $this->line($handler->s3DumpResponse());
 
-            if ($this->option('keep-only-s3')) {
+            if ($this->option('keep-only-s3') !== false) {
                 File::delete($this->filePath);
                 $this->line($handler->localDumpRemovedResponse());
             }
@@ -129,11 +129,41 @@ class BackupCommand extends BaseCommand
     protected function getOptions()
     {
         return [
-            ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to backup'],
-            ['upload-s3', true, InputOption::VALUE_NONE, 'Upload the dump to your S3 bucket'],
-            ['keep-only-s3', true, InputOption::VALUE_NONE, 'Delete the local dump after upload to S3 bucket'],
-            ['prefix', null, InputOption::VALUE_OPTIONAL, 'Prefix for sql backup'],
-            ['encrypt', false, InputOption::VALUE_NONE, 'Encrypt dump'],
+            [
+                'database',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The database connection to backup',
+                'mysql'
+            ],
+            [
+                'upload-s3',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Upload the dump to your S3 bucket',
+                true
+            ],
+            [
+                'keep-only-s3',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Delete the local dump after upload to S3 bucket',
+                true
+            ],
+            [
+                'prefix',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Prefix for sql backup',
+                date('Y-m-d') . '-'
+            ],
+            [
+                'encrypt',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Encrypt dump',
+                false
+            ],
         ];
     }
 

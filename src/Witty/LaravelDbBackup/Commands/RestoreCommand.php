@@ -39,19 +39,18 @@ class RestoreCommand extends BaseCommand
     public function fire()
     {
         $this->database = $this->getDatabase($this->input->getOption('database'));
-        if ($this->option('aws-dump')) {
 
+        if (!is_null($this->option('aws-dump')) {
             return $this->restoreDumpFromAws($this->option('aws-dump'));
-
         }
-        if ($this->option('aws-last-dump')) {
 
+        if ($this->option('aws-last-dump') !== false) {
             return $this->restoreLastAwsDump();
-
         }
+
         $fileName = $this->argument('filename');
 
-        if ($this->option('last-dump')) {
+        if ($this->option('last-dump') !== false) {
             $fileName = $this->lastBackupFile();
 
             if (!$fileName) {
@@ -270,10 +269,34 @@ class RestoreCommand extends BaseCommand
     protected function getOptions()
     {
         return [
-            ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to restore to'],
-            ['last-dump', true, InputOption::VALUE_OPTIONAL, 'The last dump stored'],
-            ['aws-last-dump', true, InputOption::VALUE_OPTIONAL, 'The last dump from aws'],
-            ['aws-dump', null, InputOption::VALUE_OPTIONAL, 'The dump from aws. Enter file name'],
+            [
+                'database',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The database connection to restore to',
+                'mysql'
+            ],
+            [
+                'last-dump',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The last dump stored',
+                false
+            ],
+            [
+                'aws-last-dump',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The last dump from aws',
+                true
+            ],
+            [
+                'aws-dump',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'The dump from aws. Enter file name',
+                null
+            ],
         ];
     }
 
