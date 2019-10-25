@@ -2,11 +2,12 @@
 
 namespace Witty\LaravelDbBackup\Commands;
 
+use Aws\S3\S3Client;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Config;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Finder\Finder;
-use Witty\LaravelDbBackup\Commands\Helpers\DropBox;
 use Witty\LaravelDbBackup\Commands\Helpers\Encrypt;
 use Witty\LaravelDbBackup\Models\Dump;
 
@@ -21,7 +22,7 @@ class RestoreCommand extends BaseCommand
      * @var string
      */
     protected $name = 'db:restore';
-    protected $description = 'Restore a dump from `app/storage/dumps`';
+    protected $description = 'Restore a database backup to current SQL connection.';
     protected $database;
 
     /**
@@ -38,14 +39,14 @@ class RestoreCommand extends BaseCommand
     public function fire()
     {
         $this->database = $this->getDatabase($this->input->getOption('database'));
-        if ($this->option('dropbox-dump')) {
+        if ($this->option('aws-dump')) {
 
-            return $this->restoreDumpFromDropbox($this->option('dropbox-dump'));
+            return $this->restoreDumpFromAws($this->option('aws-dump'));
 
         }
-        if ($this->option('dropbox-last-dump')) {
+        if ($this->option('aws-last-dump')) {
 
-            return $this->restoreLastDropboxDump();
+            return $this->restoreLastAwsDump();
 
         }
         $fileName = $this->argument('dump');
@@ -70,16 +71,16 @@ class RestoreCommand extends BaseCommand
     /**
      * @throws \League\Flysystem\FileNotFoundException
      */
-    private function restoreLastDropboxDump()
+    private function restoreLastAwsDump()
     {
 
         $lastDumpName = Dump::latest()->first();
 
         if ($lastDumpName instanceof Dump) {
-            return $this->restoreDumpFromDropbox($lastDumpName->file_name);
+            return $this->restoreDumpFromAws($lastDumpName->file_name);
         }
         return $this->line(
-            $this->colors->getColoredString("\n" . 'No query results in your DB. Try option --dropbox-dump' . "\n", 'red')
+            $this->colors->getColoredString("\n" . 'No query results in your DB. Try option --aws-dump' . "\n", 'red')
         );
     }
 
@@ -87,27 +88,28 @@ class RestoreCommand extends BaseCommand
      * @param $fileName
      * @throws \League\Flysystem\FileNotFoundException
      */
-    private function restoreDumpFromDropbox($fileName)
+    private function restoreDumpFromAws($fileName)
     {
 
-        $content = $this->getDumpFromDropbox($fileName);
+        $content = $this->getDumpFromAws($fileName);
         if (!$content) {
             return $this->line(
                 $this->colors->getColoredString("\n" . 'File not found.' . "\n", 'red')
             );
         }
-        is_file($this->getDumpsPath() . $fileName) ?
-            unlink($this->getDumpsPath() . $fileName) : null;
+
+        if (is_file($this->getDumpsPath() . $fileName)) {
+            unlink($this->getDumpsPath() . $fileName);
+        }
+
         file_put_contents($this->getDumpsPath() . $fileName, $content);
 
         if (is_file($this->getDumpsPath() . $fileName)) {
-
             return $this->restoreDump($fileName);
-
         }
 
         return $this->line(
-            $this->colors->getColoredString("\n" . 'Filed to save file from dropbox.' . "\n", 'red')
+            $this->colors->getColoredString("\n" . 'Filed to save file from aws.' . "\n", 'red')
         );
     }
 
@@ -116,12 +118,25 @@ class RestoreCommand extends BaseCommand
      * @return bool|false|string
      * @throws \League\Flysystem\FileNotFoundException
      */
-    private function getDumpFromDropbox($dump)
+    private function getDumpFromAws($filename)
     {
+        $s3 = new S3Client([
+            'region'  => Config::get('db-backup.s3.region'),
+            'version' => 'latest',
+            'credentials' => [
+                'key'    => Config::get('db-backup.s3.accessKey'),
+                'secret' => Config::get('db-backup.s3.secretKey')
+            ]
+        ]);
 
-        $dropbox = new DropBox();
-        return $dropbox->getFileContent($dump);
-
+        try {
+            return $s3->getObject([
+                'Bucket' => Config::get('db-backup.s3.bucket'),
+                'Key' => $this->getS3Path() . '/' . $filename
+            ]);
+        } catch (Aws\S3\Exception\S3Exception $e) {
+            die($e->getMessage());
+        }
     }
 
     /**
@@ -257,8 +272,8 @@ class RestoreCommand extends BaseCommand
         return [
             ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to restore to'],
             ['last-dump', true, InputOption::VALUE_NONE, 'The last dump stored'],
-            ['dropbox-last-dump', false, InputOption::VALUE_NONE, 'The last dump from dropbox'],
-            ['dropbox-dump', null, InputOption::VALUE_OPTIONAL, 'The dump from dropbox. Enter file name'],
+            ['aws-last-dump', true, InputOption::VALUE_NONE, 'The last dump from aws'],
+            ['aws-dump', null, InputOption::VALUE_OPTIONAL, 'The dump from aws. Enter file name'],
         ];
     }
 

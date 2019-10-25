@@ -62,6 +62,14 @@ class BaseCommand extends Command
     }
 
     /**
+     * @return string
+     */
+    protected function getS3Path()
+    {
+        return Config::get('db-backup.s3.path');
+    }
+
+    /**
      * @return boolean
      */
     public function enableCompression()

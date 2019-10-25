@@ -2,7 +2,7 @@
 
 namespace Witty\LaravelDbBackup\Commands;
 
-use Aws\Laravel\AwsFacade as AWS;
+use Aws\S3\S3Client;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
@@ -10,7 +10,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Witty\LaravelDbBackup\Commands\Helpers\BackupFile;
 use Witty\LaravelDbBackup\Commands\Helpers\BackupHandler;
-use Witty\LaravelDbBackup\Commands\Helpers\DropBox;
 use Witty\LaravelDbBackup\Commands\Helpers\Encrypt;
 use Witty\LaravelDbBackup\Models\Dump;
 
@@ -75,22 +74,12 @@ class BackupCommand extends BaseCommand
             }
         }
 
-        // Save to dropbox
-        //----------------
-        if ($this->option('dropbox')) {
-
-            $dropBox = new DropBox();
-            if (!$dropBox->saveFile($this->fileName, $this->filePath)) {
-                return $this->line('Uploading to dropbox filed');
-            }
-        }
-
         // Save dump name to db
         //----------------
         Dump::create([
             'file' => $this->filePath,
             'file_name' => $this->fileName,
-            'prefix' => Config::get('db-backup.dropbox.prefix', null),
+            'prefix' => $this->option('prefix'),
             'encrypted' => $this->option('encrypt'),
             'created_at' => Carbon::now()->timestamp
         ]);
@@ -141,9 +130,9 @@ class BackupCommand extends BaseCommand
     {
         return [
             ['database', null, InputOption::VALUE_OPTIONAL, 'The database connection to backup'],
-            ['upload-s3', 'u', InputOption::VALUE_REQUIRED, 'Upload the dump to your S3 bucket'],
+            ['upload-s3', true, InputOption::VALUE_OPTIONAL, 'Upload the dump to your S3 bucket'],
             ['keep-only-s3', true, InputOption::VALUE_NONE, 'Delete the local dump after upload to S3 bucket'],
-            ['dropbox', false, InputOption::VALUE_NONE, 'Save dump to dropbox'],
+            ['prefix', null, InputOption::VALUE_NONE, 'Prefix for sql backup'],
             ['encrypt', false, InputOption::VALUE_NONE, 'Encrypt dump'],
         ];
     }
@@ -165,22 +154,23 @@ class BackupCommand extends BaseCommand
      */
     protected function uploadS3()
     {
-        $bucket = $this->option('upload-s3');
-        $s3 = AWS::get('s3');
-        $s3->putObject([
-            'Bucket' => $bucket,
-            'Key' => $this->getS3DumpsPath() . '/' . $this->fileName,
-            'SourceFile' => $this->filePath,
+        $s3 = new S3Client([
+            'region'  => Config::get('db-backup.s3.region'),
+            'version' => 'latest',
+            'credentials' => [
+                'key'    => Config::get('db-backup.s3.accessKey'),
+                'secret' => Config::get('db-backup.s3.secretKey')
+            ]
         ]);
-    }
 
-    /**
-     * @return string
-     */
-    protected function getS3DumpsPath()
-    {
-        $default = 'dumps';
-
-        return Config::get('db-backup.s3.path', $default);
+        try {
+            $s3->putObject([
+                'Bucket' => Config::get('db-backup.s3.bucket'),
+                'Key' => $this->getS3Path() . '/' . $this->fileName,
+                'SourceFile' => $this->filePath
+            ]);
+        } catch (Aws\S3\Exception\S3Exception $e) {
+            die($e->getMessage());
+        }
     }
 }
