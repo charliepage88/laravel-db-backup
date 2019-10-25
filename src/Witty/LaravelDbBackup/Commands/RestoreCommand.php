@@ -40,7 +40,7 @@ class RestoreCommand extends BaseCommand
     {
         $this->database = $this->getDatabase($this->input->getOption('database'));
 
-        if (!is_null($this->option('aws-dump')) {
+        if (!is_null($this->option('aws-dump'))) {
             return $this->restoreDumpFromAws($this->option('aws-dump'));
         }
 
